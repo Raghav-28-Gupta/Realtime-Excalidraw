@@ -18,7 +18,7 @@ userRouter.post("/signup", async (req: Request, res: Response) => {
           return;
      }
 
-     const { name, password, photo, email } = req.body;
+     const { name, password, email } = req.body;
      const existingUser = await prisma.user.findUnique({ where: { email } });
      if(existingUser) {
           res.json({
@@ -34,7 +34,6 @@ userRouter.post("/signup", async (req: Request, res: Response) => {
                name, 
                email,
                password: hashedPassword,
-               photo
           }
      })
 

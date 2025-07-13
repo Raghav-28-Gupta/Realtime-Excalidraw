@@ -68,7 +68,6 @@ function App() {
             name: formData.name,
             email: formData.email,
             password: formData.password,
-            photo: '' // Optional field
           }),
         });
 
