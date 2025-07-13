@@ -1,46 +1,9 @@
 import { Tool } from "@/components/Canvas";
 import { getShapes } from "./http";
-import rough from "roughjs"
-
-type Shape = {
-     id: string;
-     type: "rectangle";
-     x: number;
-     y: number;
-     width: number;
-     height: number
-} | {
-     id: string;
-     type: "circle";
-     centreX: number;
-     centreY: number;
-     radius: number;
-} | {
-     id: string;
-     type: "pencil";
-     points: { x: number; y: number }[];
-} | {
-     id: string;
-     type: "diamond";
-     centerX: number;
-     centerY: number;
-     width: number;
-     height: number;
-} | {
-     id: string;
-     type: "arrow";
-     startX: number;
-     startY: number;
-     endX: number;
-     endY: number;
-} | {
-     id: string;
-     type: "line";
-     startX: number;
-     startY: number;
-     endX: number;
-     endY: number;
-}
+import rough from "roughjs";
+import { Shape, Point } from "../utils/shapeTypes";
+import { CanvasUtils } from "../utils/CanvasUtils";
+import { ShapeDetection, ShapeFactory, GameHelpers } from "../utils/helpers";
 
 export class Game {
      private canvas: HTMLCanvasElement;
@@ -51,8 +14,8 @@ export class Game {
      private StartX = 0;
      private StartY = 0;
      private selectedTool: Tool = "circle";
-     private pencilPoints: { x: number; y: number }[] = [];
-     private rc: ReturnType<typeof rough.canvas>;
+     private pencilPoints: Point[] = [];
+     private canvasUtils: CanvasUtils;
      private lastMoveTime = 0;
      private moveThrottle = 16; // ~60fps  -> Thanks AI!
 
@@ -76,7 +39,7 @@ export class Game {
      constructor(canvas:HTMLCanvasElement, roomId: string, socket: WebSocket) {
           this.canvas = canvas;
           this.ctx = canvas.getContext('2d')!;   //By writing !, you tell TypeScript: "I am sure this is not null here."
-          this.rc = rough.canvas(this.canvas);
+          this.canvasUtils = new CanvasUtils(this.canvas);
           this.existingShapes = [];
           this.roomId = roomId;
           this.socket = socket;
@@ -98,31 +61,6 @@ export class Game {
           this.selectedTool = tool;
      }
 
-     // Converting screen coordinates to world coordinates
-     private screenToWorld(screenX: number, screenY: number): { x: number; y: number } {
-          return {
-               x: (screenX - this.offsetX) / this.scale,
-               y: (screenY - this.offsetY) / this.scale
-          };
-     }
-
-     // Converting world coordinates to screen coordinates
-     private worldToScreen(worldX: number, worldY: number): { x: number; y: number } {
-          return {
-               x: worldX * this.scale + this.offsetX,
-               y: worldY * this.scale + this.offsetY
-          };
-     }
-
-     // Get mouse position relative to canvas
-     private getMousePosition(e: MouseEvent): { x: number; y: number } {
-          const rect = this.canvas.getBoundingClientRect();
-          return {
-               x: e.clientX - rect.left,
-               y: e.clientY - rect.top
-          };
-     }
-
      async init() {
           this.existingShapes = await getShapes(this.roomId);
           this.clearCanvas();
@@ -142,7 +80,7 @@ export class Game {
                     // Remove the erased shapes from local array
                     this.existingShapes = this.existingShapes.filter(existingShape => {
                          return !shapesToErase.some((eraseShape: Shape) => 
-                              this.areShapesEqual(existingShape, eraseShape)
+                              GameHelpers.areShapesEqual(existingShape, eraseShape)
                          );
                     });
                     this.clearCanvas();
@@ -151,51 +89,24 @@ export class Game {
      }
 
      clearCanvas() {
-          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-          this.ctx.fillStyle = "rgba(0, 0, 0)";
-          this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+          this.canvasUtils.clearCanvas();
 
-          // Save current transformation
-          this.ctx.save();
-          // Apply translation and scaling for infinite canvas with zoom
-          this.ctx.translate(this.offsetX, this.offsetY);
-          this.ctx.scale(this.scale, this.scale);
+          // Apply transformation for infinite canvas with zoom
+          this.canvasUtils.applyTransform(this.offsetX, this.offsetY, this.scale);
 
+          // Draw all existing shapes
           for (const shape of this.existingShapes) {
-               if (shape.type === "rectangle") {
-                    this.rc.rectangle(shape.x, shape.y, shape.width, shape.height, {
-                    stroke: "white",
-               });
-               } else if (shape.type === "circle") {
-                    this.rc.circle(shape.centreX, shape.centreY, shape.radius * 2, {
-                    stroke: "white",
-               });
-               } else if (shape.type === "pencil") {
-                    const points = shape.points.map((p) => [p.x, p.y]);
-                    // @ts-ignore
-                    this.rc.linearPath(points, { stroke: "white" });
-               } else if (shape.type === "diamond") {
-                    this.drawDiamond(shape.centerX, shape.centerY, shape.width, shape.height, {
-                         stroke: "white",
-                    });
-               } else if (shape.type === "arrow") {
-                    this.drawArrow(shape.startX, shape.startY, shape.endX, shape.endY, {
-                         stroke: "white",
-                    });
-               } else if (shape.type === "line") {
-                    this.drawLine(shape.startX, shape.startY, shape.endX, shape.endY, {
-                         stroke: "white",
-                    });
-               }
+               this.canvasUtils.drawShape(shape, { stroke: "white" });
           }
 
           // Restore transformation
+          this.canvasUtils.restoreTransform();
           this.ctx.restore();
      }
 
      
      mouseDownHandler = (e: MouseEvent) => {
-          const mousePos = this.getMousePosition(e);
+          const mousePos = this.canvasUtils.getMousePosition(e);
           
           // Check if middle mouse button or Ctrl key is held for panning
           if (e.button === 1 || e.ctrlKey || e.metaKey) {
@@ -210,7 +121,7 @@ export class Game {
 
           this.clicked = true;
           // Converting to world coordinates
-          const worldPos = this.screenToWorld(mousePos.x, mousePos.y);
+          const worldPos = this.canvasUtils.screenToWorld(mousePos.x, mousePos.y, this.offsetX, this.offsetY, this.scale);
           this.StartX = worldPos.x;
           this.StartY = worldPos.y;
 
@@ -229,8 +140,8 @@ export class Game {
           console.log("Mouse up event fired");
           this.clicked = false;
           
-          const mousePos = this.getMousePosition(e);
-          const worldPos = this.screenToWorld(mousePos.x, mousePos.y);
+          const mousePos = this.canvasUtils.getMousePosition(e);
+          const worldPos = this.canvasUtils.screenToWorld(mousePos.x, mousePos.y, this.offsetX, this.offsetY, this.scale);
           const width = worldPos.x - this.StartX;
           const height = worldPos.y - this.StartY;
 
@@ -238,27 +149,13 @@ export class Game {
                const cursorX = worldPos.x;
                const cursorY = worldPos.y;
 
-               // Find shapes that will be erased
+               // Find shapes that will be erased using helper methods
                const shapesToErase = this.existingShapes.filter((shape) => {
-                    return (
-                    this.isPointNearRect(cursorX, cursorY, shape) ||
-                    this.isPointNearCircle(cursorX, cursorY, shape) ||
-                    this.isPointNearPencil(cursorX, cursorY, shape) ||
-                    this.isPointNearDiamond(cursorX, cursorY, shape) ||
-                    this.isPointNearArrow(cursorX, cursorY, shape) ||
-                    this.isPointNearLine(cursorX, cursorY, shape)
-                    );
+                    return GameHelpers.isPointNearAnyShape(cursorX, cursorY, shape);
                });
 
                const newShapes = this.existingShapes.filter((shape) => {
-                    return !(
-                    this.isPointNearRect(cursorX, cursorY, shape) ||
-                    this.isPointNearCircle(cursorX, cursorY, shape) ||
-                    this.isPointNearPencil(cursorX, cursorY, shape) ||
-                    this.isPointNearDiamond(cursorX, cursorY, shape) ||
-                    this.isPointNearArrow(cursorX, cursorY, shape) ||
-                    this.isPointNearLine(cursorX, cursorY, shape)
-                    );
+                    return !GameHelpers.isPointNearAnyShape(cursorX, cursorY, shape);
                });
 
                if (newShapes.length !== this.existingShapes.length) {
@@ -276,59 +173,53 @@ export class Game {
                }
                return;
           }
-          // @ts-ignore
+          // Create shape using ShapeFactory
           let shape: Shape | null = null;
           if (this.selectedTool === "rectangle") {
-               shape = {
-                    id: crypto.randomUUID(),
-                    type: "rectangle",
-                    x: this.StartX,
-                    y: this.StartY,
-                    height,
-                    width
-               }
+               shape = ShapeFactory.createRectangle(
+                    GameHelpers.generateShapeId(),
+                    this.StartX,
+                    this.StartY,
+                    width,
+                    height
+               );
           } else if (this.selectedTool === "circle") {
                const radius = Math.max(Math.abs(width), Math.abs(height)) / 2;
-               shape = {
-                    id: crypto.randomUUID(),
-                    type: "circle",
-                    radius: radius,
-                    centreX: this.StartX + width / 2,
-                    centreY: this.StartY + height / 2,
-               }
+               shape = ShapeFactory.createCircle(
+                    GameHelpers.generateShapeId(),
+                    this.StartX + width / 2,
+                    this.StartY + height / 2,
+                    radius
+               );
           } else if(this.selectedTool === "pencil") {
-               shape = {
-                    id: crypto.randomUUID(),
-                    type: "pencil",
-                    points: this.pencilPoints,
-               };
+               shape = ShapeFactory.createPencil(
+                    GameHelpers.generateShapeId(),
+                    this.pencilPoints
+               );
           } else if (this.selectedTool === "diamond") {
-               shape = {
-                    id: crypto.randomUUID(),
-                    type: "diamond",
-                    centerX: this.StartX + width / 2,
-                    centerY: this.StartY + height / 2,
-                    width: Math.abs(width),
-                    height: Math.abs(height),
-               };
+               shape = ShapeFactory.createDiamond(
+                    GameHelpers.generateShapeId(),
+                    this.StartX + width / 2,
+                    this.StartY + height / 2,
+                    Math.abs(width),
+                    Math.abs(height)
+               );
           } else if (this.selectedTool === "arrow") {
-               shape = {
-                    id: crypto.randomUUID(),
-                    type: "arrow",
-                    startX: this.StartX,
-                    startY: this.StartY,
-                    endX: this.StartX + width,
-                    endY: this.StartY + height,
-               };
+               shape = ShapeFactory.createArrow(
+                    GameHelpers.generateShapeId(),
+                    this.StartX,
+                    this.StartY,
+                    this.StartX + width,
+                    this.StartY + height
+               );
           } else if (this.selectedTool === "line") {
-               shape = {
-                    id: crypto.randomUUID(),
-                    type: "line",
-                    startX: this.StartX,
-                    startY: this.StartY,
-                    endX: this.StartX + width,
-                    endY: this.StartY + height,
-               };
+               shape = ShapeFactory.createLine(
+                    GameHelpers.generateShapeId(),
+                    this.StartX,
+                    this.StartY,
+                    this.StartX + width,
+                    this.StartY + height
+               );
           }
 
           if (!shape) {
@@ -358,7 +249,7 @@ export class Game {
           }
           this.lastMoveTime = now;
 
-          const mousePos = this.getMousePosition(e);
+          const mousePos = this.canvasUtils.getMousePosition(e);
 
           // Handle panning
           if (this.isPanning) {
@@ -371,61 +262,41 @@ export class Game {
           }
 
           if(this.clicked && this.selectedTool !== "eraser") {
-               const worldPos = this.screenToWorld(mousePos.x, mousePos.y);
+               const worldPos = this.canvasUtils.screenToWorld(mousePos.x, mousePos.y, this.offsetX, this.offsetY, this.scale);
                
                if (this.selectedTool === "pencil") {
                     this.pencilPoints.push({ x: worldPos.x, y: worldPos.y });
                     
-                    // Save current transformation
-                    this.ctx.save();
-                    this.ctx.translate(this.offsetX, this.offsetY);
-                    this.ctx.scale(this.scale, this.scale);
-                    
-                    this.rc.linearPath(
-                         this.pencilPoints.map((p) => [p.x, p.y]),
-                         { stroke: "white" }
-                    );
-                    
-                    // Restore transformation
-                    this.ctx.restore();
+                    // Apply transformation and draw pencil stroke
+                    this.canvasUtils.applyTransform(this.offsetX, this.offsetY, this.scale);
+                    this.canvasUtils.drawLinearPath(this.pencilPoints, { stroke: "white" });
+                    this.canvasUtils.restoreTransform();
                } else {
                     const width = worldPos.x - this.StartX;
                     const height = worldPos.y - this.StartY;
                     
                     this.clearCanvas();
                     
-                    // Save current transformation
-                    this.ctx.save();
-                    this.ctx.translate(this.offsetX, this.offsetY);
-                    this.ctx.scale(this.scale, this.scale);
+                    // Apply transformation and draw preview shape
+                    this.canvasUtils.applyTransform(this.offsetX, this.offsetY, this.scale);
                     
                     if (this.selectedTool === "rectangle") {
-                         this.rc.rectangle(this.StartX, this.StartY, width, height, {
-                              stroke: "white",
-                         });
+                         this.canvasUtils.drawRectangle(this.StartX, this.StartY, width, height, { stroke: "white" });
                     } else if (this.selectedTool === "circle") {
                          const radius = Math.max(Math.abs(width), Math.abs(height)) / 2;
                          const centreX = this.StartX + width / 2;
                          const centreY = this.StartY + height / 2;
-                         this.rc.circle(centreX, centreY, radius * 2, {
-                              stroke: "white",
-                         });
+                         this.canvasUtils.drawCircle(centreX, centreY, radius, { stroke: "white" });
                     } else if (this.selectedTool === "diamond") {
-                         this.drawDiamond(this.StartX + width / 2, this.StartY + height / 2, width, height, {
-                              stroke: "white",
-                         });
+                         this.canvasUtils.drawDiamond(this.StartX + width / 2, this.StartY + height / 2, width, height, { stroke: "white" });
                     } else if (this.selectedTool === "arrow") {
-                         this.drawArrow(this.StartX, this.StartY, this.StartX + width, this.StartY + height, {
-                              stroke: "white",
-                         });
+                         this.canvasUtils.drawArrow(this.StartX, this.StartY, this.StartX + width, this.StartY + height, { stroke: "white" });
                     } else if (this.selectedTool === "line") {
-                         this.drawLine(this.StartX, this.StartY, this.StartX + width, this.StartY + height, {
-                              stroke: "white",
-                         });
+                         this.canvasUtils.drawLine(this.StartX, this.StartY, this.StartX + width, this.StartY + height, { stroke: "white" });
                     }
                     
                     // Restore transformation
-                    this.ctx.restore();
+                    this.canvasUtils.restoreTransform();
                }
           }
      }
@@ -445,7 +316,7 @@ export class Game {
      wheelHandler = (e: WheelEvent) => {
           e.preventDefault();
           
-          const mousePos = this.getMousePosition(e);
+          const mousePos = this.canvasUtils.getMousePosition(e);
           
           // Check if Ctrl/Cmd is held for zooming
           if (e.ctrlKey || e.metaKey) {
@@ -455,12 +326,12 @@ export class Game {
                
                if (newScale !== this.scale) {
                     // Zoom towards mouse position
-                    const worldPos = this.screenToWorld(mousePos.x, mousePos.y);
+                    const worldPos = this.canvasUtils.screenToWorld(mousePos.x, mousePos.y, this.offsetX, this.offsetY, this.scale);
                     
                     this.scale = newScale;
                     
                     // Adjust offset to zoom towards mouse position
-                    const newScreenPos = this.worldToScreen(worldPos.x, worldPos.y);
+                    const newScreenPos = this.canvasUtils.worldToScreen(worldPos.x, worldPos.y, this.offsetX, this.offsetY, this.scale);
                     this.offsetX += mousePos.x - newScreenPos.x;
                     this.offsetY += mousePos.y - newScreenPos.y;
                     
@@ -478,22 +349,6 @@ export class Game {
 
      preventContextMenu = (e: Event) => {
           e.preventDefault();
-     }
-
-     isPointNearRect(px: number, py: number, shape: Shape): boolean {
-          if (shape.type !== "rectangle") return false;
-          // Increase precision: shrink hitbox for small rectangles
-          const minSize = 8; // px
-          const x0 = shape.x;
-          const x1 = shape.x + Math.max(shape.width, minSize);
-          const y0 = shape.y;
-          const y1 = shape.y + Math.max(shape.height, minSize);
-          return (
-               px >= x0 &&
-               px <= x1 &&
-               py >= y0 &&
-               py <= y1
-          );
      }
 
      isPointNearCircle(px: number, py: number, shape: Shape): boolean {
@@ -577,10 +432,6 @@ export class Game {
           }
      }
 
-     areShapesEqual(shape1: Shape, shape2: Shape): boolean {
-          return shape1.id === shape2.id;
-     }
-
      // Public methods for external control of infinite canvas
      public pan(deltaX: number, deltaY: number) {
           this.offsetX += deltaX;
@@ -625,44 +476,6 @@ export class Game {
      public setZoom(scale: number) {
           this.scale = Math.max(this.minScale, Math.min(this.maxScale, scale));
           this.clearCanvas();
-     }
-
-     // Helper functions for drawing diamond, arrow, and line shapes
-     private drawDiamond(centerX: number, centerY: number, width: number, height: number, options: any) {
-          const halfWidth = width / 2;
-          const halfHeight = height / 2;
-          const points = [
-               [centerX, centerY - halfHeight], // top
-               [centerX + halfWidth, centerY], // right
-               [centerX, centerY + halfHeight], // bottom
-               [centerX - halfWidth, centerY]  // left
-          ];
-          // @ts-ignore
-          this.rc.polygon(points, options);
-     }
-
-     private drawArrow(startX: number, startY: number, endX: number, endY: number, options: any) {
-          // Draw line
-          this.rc.line(startX, startY, endX, endY, options);
-          
-          // Calculate arrowhead
-          const headLength = 15;
-          const headAngle = Math.PI / 6; // 30 degrees
-          const angle = Math.atan2(endY - startY, endX - startX);
-          
-          // Arrowhead points
-          const headX1 = endX - headLength * Math.cos(angle - headAngle);
-          const headY1 = endY - headLength * Math.sin(angle - headAngle);
-          const headX2 = endX - headLength * Math.cos(angle + headAngle);
-          const headY2 = endY - headLength * Math.sin(angle + headAngle);
-          
-          // Draw arrowhead
-          this.rc.line(endX, endY, headX1, headY1, options);
-          this.rc.line(endX, endY, headX2, headY2, options);
-     }
-
-     private drawLine(startX: number, startY: number, endX: number, endY: number, options: any) {
-          this.rc.line(startX, startY, endX, endY, options);
      }
 }
 
