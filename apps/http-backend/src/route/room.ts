@@ -23,9 +23,9 @@ roomRouter.post("", userMiddleware, async (req: Request, res: Response) => {
 
      const existingRoomName = await prisma.room.findFirst({ where: {slug, adminId} });
      if(existingRoomName) {
-          res.json({
+          return res.status(400).json({
                message: "Select a different room name"
-          })
+          });
      }
 
      try {
@@ -84,5 +84,41 @@ roomRouter.get("/room/:slug", async (req: Request, res: Response) => {
           res.json({
                message: "Invalid slug"
           })
+     }
+})
+
+// @ts-ignore
+roomRouter.post("/validate-room", async (req: Request, res: Response) => {
+     const { roomId, roomName } = req.body;
+     
+     if (!roomId || !roomName) {
+          return res.status(400).json({
+               message: "Both room ID and room name are required"
+          });
+     }
+
+     try {
+          const room = await prisma.room.findFirst({
+               where: {
+                    id: Number(roomId),
+                    slug: roomName
+               }
+          });
+
+          if (!room) {
+               return res.status(404).json({
+                    message: "Room not found or room ID and name do not match"
+               });
+          }
+
+          res.json({
+               room,
+               message: "Room validated successfully"
+          });
+     } catch (error) {
+          console.error("Room validation error:", error);
+          res.status(500).json({
+               message: "Failed to validate room"
+          });
      }
 })

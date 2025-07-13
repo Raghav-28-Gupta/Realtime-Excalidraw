@@ -6,11 +6,19 @@ import { Canvas } from "./Canvas";
 export function RoomCanvas({ roomId }: { roomId: string }) {
      const [socket, setSocket] = useState<WebSocket | null>(null);
      const [isOpen, setIsOpen] = useState(false);
+     const [error, setError] = useState<string | null>(null);
 
      useEffect(() => {
           console.log("Attempting WebSocket connection...");
+          const token = localStorage.getItem('token');
+          if (!token) {
+               console.error("No authentication token found");
+               setError("Authentication required. Please sign in again.");
+               return;
+          }
+          
           const ws = new WebSocket(
-          `${WS_URL}?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjFjZTAzNzM1LTBkZWMtNDhmMC05ZDI2LWQyYzJlMDQ2MDBmNCIsImlhdCI6MTc1MTk5MDU1MH0.laD4WyfM0XOCUmuGY9QXq4s9VGHFoe2azas754fNprg`
+          `${WS_URL}?token=${token}`
           );
 
      ws.onopen = () => {
@@ -40,6 +48,22 @@ export function RoomCanvas({ roomId }: { roomId: string }) {
           ws.close();
           };
      }, [roomId]);
+
+     if (error) {
+          return (
+               <div className="flex items-center justify-center min-h-screen bg-red-50">
+                    <div className="text-center p-6 bg-white rounded-lg shadow-lg">
+                         <p className="text-red-600 mb-4">{error}</p>
+                         <button 
+                              onClick={() => window.location.href = '/'}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                         >
+                              Go to Home
+                         </button>
+                    </div>
+               </div>
+          );
+     }
 
      if (!socket || !isOpen) {
           return <div>Connecting to server....</div>;
