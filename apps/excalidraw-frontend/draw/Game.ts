@@ -1,6 +1,5 @@
 import { Tool } from "@/components/Canvas";
 import { getShapes } from "./http";
-import rough from "roughjs";
 import { Shape, Point } from "../utils/shapeTypes";
 import { CanvasUtils } from "../utils/CanvasUtils";
 import { ShapeDetection, ShapeFactory, GameHelpers } from "../utils/helpers";

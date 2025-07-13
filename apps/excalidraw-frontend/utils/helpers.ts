@@ -1,7 +1,7 @@
 import { Shape, Point } from "./shapeTypes";
 
 export class ShapeDetection {
-     // Check if a point is near a rectangle
+     // Checking if a point is near a rectangle
      static isPointNearRect(px: number, py: number, shape: Shape): boolean {
           if (shape.type !== "rectangle") return false;
           
@@ -20,7 +20,7 @@ export class ShapeDetection {
           );
      }
 
-     // Check if a point is near a circle
+     // Checking if a point is near a circle
      static isPointNearCircle(px: number, py: number, shape: Shape): boolean {
           if (shape.type !== "circle") return false;
           
@@ -33,7 +33,7 @@ export class ShapeDetection {
           return Math.sqrt(dx * dx + dy * dy) <= effectiveRadius;
      }
 
-     // Check if a point is near a pencil stroke
+     // Checking if a point is near a pencil stroke
      static isPointNearPencil(px: number, py: number, shape: Shape): boolean {
           if (shape.type !== "pencil") return false;
           
@@ -49,11 +49,11 @@ export class ShapeDetection {
           return false;
      }
 
-     // Check if a point is near a diamond
+     // Checking if a point is near a diamond
      static isPointNearDiamond(px: number, py: number, shape: Shape): boolean {
           if (shape.type !== "diamond") return false;
           
-          // For diamond, check if point is inside diamond bounds (simplified to rectangle for now)
+          // For diamond, checking if point is inside diamond bounds (simplified to rectangle for now)
           const halfWidth = shape.width / 2;
           const halfHeight = shape.height / 2;
           
@@ -65,22 +65,22 @@ export class ShapeDetection {
           );
      }
 
-     // Check if a point is near an arrow
+     // Checking if a point is near an arrow
      static isPointNearArrow(px: number, py: number, shape: Shape): boolean {
           if (shape.type !== "arrow") return false;
           
-          // Check if point is near the arrow line
+          // Checking if point is near the arrow line
           return this.isPointNearLineSegment(px, py, shape.startX, shape.startY, shape.endX, shape.endY);
      }
 
-     // Check if a point is near a line
+     // Checking if a point is near a line
      static isPointNearLine(px: number, py: number, shape: Shape): boolean {
           if (shape.type !== "line") return false;
           
           return this.isPointNearLineSegment(px, py, shape.startX, shape.startY, shape.endX, shape.endY);
      }
 
-     // Helper method to check if a point is near a line segment
+     // Helper method to check if a point is near a line segment  
      static isPointNearLineSegment(px: number, py: number, startX: number, startY: number, endX: number, endY: number): boolean {
           const precision = 5; // px
           const A = px - startX;
@@ -191,12 +191,12 @@ export class GameHelpers {
           return shape1.id === shape2.id;
      }
 
-     // Generate a unique ID for shapes
+     // Generate a unique ID for shapes (Eraser Implementation)
      static generateShapeId(): string {
           return crypto.randomUUID();
      }
 
-     // Check if a point is near any shape
+     // Checking if a point is near any shape
      static isPointNearAnyShape(px: number, py: number, shape: Shape): boolean {
           return (
                ShapeDetection.isPointNearRect(px, py, shape) ||
@@ -208,7 +208,7 @@ export class GameHelpers {
           );
      }
 
-     // Calculate distance between two points
+     // To Calculate distance between two points
      static distance(p1: Point, p2: Point): number {
           const dx = p2.x - p1.x;
           const dy = p2.y - p1.y;

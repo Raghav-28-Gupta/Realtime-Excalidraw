@@ -21,7 +21,7 @@ export class CanvasUtils {
           };
      }
 
-     // Converting screen coordinates to world coordinates
+     // Converting screen coordinates to world coordinates (infinite canavas implementation)
      screenToWorld(screenX: number, screenY: number, offsetX: number, offsetY: number, scale: number): Point {
           return {
                x: (screenX - offsetX) / scale,
@@ -29,7 +29,7 @@ export class CanvasUtils {
           };
      }
 
-     // Converting world coordinates to screen coordinates
+     // Converting world coordinates to screen coordinates (infinite canavas implementation)
      worldToScreen(worldX: number, worldY: number, offsetX: number, offsetY: number, scale: number): Point {
           return {
                x: worldX * scale + offsetX,
@@ -49,14 +49,12 @@ export class CanvasUtils {
           this.ctx.restore();
      }
 
-     // Clear the entire canvas
      clearCanvas(): void {
           this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
           this.ctx.fillStyle = "rgba(0, 0, 0)";
           this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
      }
 
-     // Draw different shapes using rough.js
      drawRectangle(x: number, y: number, width: number, height: number, options: DrawingOptions = {}): void {
           this.rc.rectangle(x, y, width, height, {
                stroke: options.stroke || "white",
@@ -135,7 +133,6 @@ export class CanvasUtils {
           });
      }
 
-     // Generic shape drawing method
      drawShape(shape: Shape, options: DrawingOptions = {}): void {
           switch (shape.type) {
                case "rectangle":
