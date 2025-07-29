@@ -21,7 +21,7 @@ export class CanvasUtils {
           };
      }
 
-     // Converting screen coordinates to world coordinates (infinite canavas implementation)
+     // Converting screen coordinates to world coordinates (infinite canvas implementation)
      screenToWorld(screenX: number, screenY: number, offsetX: number, offsetY: number, scale: number): Point {
           return {
                x: (screenX - offsetX) / scale,
@@ -29,7 +29,7 @@ export class CanvasUtils {
           };
      }
 
-     // Converting world coordinates to screen coordinates (infinite canavas implementation)
+     // Converting world coordinates to screen coordinates (infinite canvas implementation)
      worldToScreen(worldX: number, worldY: number, offsetX: number, offsetY: number, scale: number): Point {
           return {
                x: worldX * scale + offsetX,
@@ -98,7 +98,6 @@ export class CanvasUtils {
      }
 
      drawArrow(startX: number, startY: number, endX: number, endY: number, options: DrawingOptions = {}): void {
-          // Draw main line
           this.rc.line(startX, startY, endX, endY, {
                stroke: options.stroke || "white",
                strokeWidth: options.strokeWidth
