@@ -263,6 +263,7 @@ export class Game {
           if(this.clicked && this.selectedTool !== "eraser") {
                const worldPos = this.canvasUtils.screenToWorld(mousePos.x, mousePos.y, this.offsetX, this.offsetY, this.scale);
                
+               // For Continuous Drawing, draw on top of existing
                if (this.selectedTool === "pencil") {
                     this.pencilPoints.push({ x: worldPos.x, y: worldPos.y });
                     
@@ -276,7 +277,6 @@ export class Game {
                     
                     this.clearCanvas();
                     
-                    // Apply transformation and draw preview shape
                     this.canvasUtils.applyTransform(this.offsetX, this.offsetY, this.scale);
                     
                     if (this.selectedTool === "rectangle") {

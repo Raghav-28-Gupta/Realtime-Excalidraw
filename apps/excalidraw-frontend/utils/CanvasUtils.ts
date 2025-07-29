@@ -12,12 +12,15 @@ export class CanvasUtils {
           this.rc = rough.canvas(canvas);
      }
 
-     // Get mouse position relative to canvas
+     // Get mouse position relative to canvas [IMPORTANT]
      getMousePosition(e: MouseEvent): Point {
+          // NOTE: getBoundingClientRect() method returns a DOMRect object. 
+          // This object provides information about the size of the canvas 
+          // and its position relative to the viewport (the visible part of the browser window)
           const rect = this.canvas.getBoundingClientRect();
           return {
-               x: e.clientX - rect.left,
-               y: e.clientY - rect.top
+               x: e.clientX - rect.left,  // By subtracting the canvas's rect.left from the mouse's e.clientX, 
+               y: e.clientY - rect.top    // WE get the x coordinate inside the canvas.
           };
      }
 
