@@ -1,7 +1,6 @@
 import { Shape, Point } from "./shapeTypes";
 
 export class ShapeDetection {
-     // Checking if a point is near a rectangle
      static isPointNearRect(px: number, py: number, shape: Shape): boolean {
           if (shape.type !== "rectangle") return false;
           
@@ -20,7 +19,6 @@ export class ShapeDetection {
           );
      }
 
-     // Checking if a point is near a circle
      static isPointNearCircle(px: number, py: number, shape: Shape): boolean {
           if (shape.type !== "circle") return false;
           
@@ -33,7 +31,6 @@ export class ShapeDetection {
           return Math.sqrt(dx * dx + dy * dy) <= effectiveRadius;
      }
 
-     // Checking if a point is near a pencil stroke
      static isPointNearPencil(px: number, py: number, shape: Shape): boolean {
           if (shape.type !== "pencil") return false;
           
@@ -49,7 +46,6 @@ export class ShapeDetection {
           return false;
      }
 
-     // Checking if a point is near a diamond
      static isPointNearDiamond(px: number, py: number, shape: Shape): boolean {
           if (shape.type !== "diamond") return false;
           
@@ -65,7 +61,6 @@ export class ShapeDetection {
           );
      }
 
-     // Checking if a point is near an arrow
      static isPointNearArrow(px: number, py: number, shape: Shape): boolean {
           if (shape.type !== "arrow") return false;
           
@@ -73,14 +68,12 @@ export class ShapeDetection {
           return this.isPointNearLineSegment(px, py, shape.startX, shape.startY, shape.endX, shape.endY);
      }
 
-     // Checking if a point is near a line
      static isPointNearLine(px: number, py: number, shape: Shape): boolean {
           if (shape.type !== "line") return false;
           
           return this.isPointNearLineSegment(px, py, shape.startX, shape.startY, shape.endX, shape.endY);
      }
 
-     // Helper method to check if a point is near a line segment  
      static isPointNearLineSegment(px: number, py: number, startX: number, startY: number, endX: number, endY: number): boolean {
           const precision = 5; // px
           const A = px - startX;
@@ -116,7 +109,6 @@ export class ShapeDetection {
 }
 
 export class ShapeFactory {
-     // Create a rectangle shape
      static createRectangle(id: string, x: number, y: number, width: number, height: number): Shape {
           return {
                id,
@@ -128,7 +120,6 @@ export class ShapeFactory {
           };
      }
 
-     // Create a circle shape
      static createCircle(id: string, centerX: number, centerY: number, radius: number): Shape {
           return {
                id,
@@ -139,7 +130,6 @@ export class ShapeFactory {
           };
      }
 
-     // Create a pencil shape
      static createPencil(id: string, points: Point[]): Shape {
           return {
                id,
@@ -148,7 +138,6 @@ export class ShapeFactory {
           };
      }
 
-     // Create a diamond shape
      static createDiamond(id: string, centerX: number, centerY: number, width: number, height: number): Shape {
           return {
                id,
@@ -160,7 +149,7 @@ export class ShapeFactory {
           };
      }
 
-     // Create an arrow shape
+     
      static createArrow(id: string, startX: number, startY: number, endX: number, endY: number): Shape {
           return {
                id,
@@ -172,7 +161,6 @@ export class ShapeFactory {
           };
      }
 
-     // Create a line shape
      static createLine(id: string, startX: number, startY: number, endX: number, endY: number): Shape {
           return {
                id,
