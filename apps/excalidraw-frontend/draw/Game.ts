@@ -248,7 +248,7 @@ export class Game {
           }
           this.lastMoveTime = now;
 
-          const mousePos = this.canvasUtils.getMousePosition(e);
+          const mousePos = this.canvasUtils.getMousePosition(e);  // getting screen coordinates relative to canvas element
 
           // Handle panning
           if (this.isPanning) {

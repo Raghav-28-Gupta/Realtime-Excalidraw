@@ -40,7 +40,7 @@ export class CanvasUtils {
           };
      }
 
-     // Apply canvas transformation
+     // Apply canvas transformation (Heart of the project)
      applyTransform(offsetX: number, offsetY: number, scale: number): void {
           this.ctx.save();
           this.ctx.translate(offsetX, offsetY);
