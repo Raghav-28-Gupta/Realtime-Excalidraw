@@ -317,9 +317,7 @@ export class Game {
           
           const mousePos = this.canvasUtils.getMousePosition(e);
           
-          // Check if Ctrl/Cmd is held for zooming
           if (e.ctrlKey || e.metaKey) {
-               // Zoom functionality
                const zoomFactor = e.deltaY > 0 ? (1 - this.zoomSpeed) : (1 + this.zoomSpeed);
                const newScale = Math.max(this.minScale, Math.min(this.maxScale, this.scale * zoomFactor));
                
