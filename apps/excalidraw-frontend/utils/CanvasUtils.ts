@@ -43,13 +43,13 @@ export class CanvasUtils {
      // Apply canvas transformation (Heart of the project)
      applyTransform(offsetX: number, offsetY: number, scale: number): void {
           this.ctx.save();
-          this.ctx.translate(offsetX, offsetY);
-          this.ctx.scale(scale, scale);
+          this.ctx.translate(offsetX, offsetY); // To move the origin of the canavas coordinate system
+          this.ctx.scale(scale, scale); // To scale the canvas coordinate system
      }
 
      // Restore canvas transformation
      restoreTransform(): void {
-          this.ctx.restore();
+          this.ctx.restore(); // Restore original coordinate system
      }
 
      clearCanvas(): void {
