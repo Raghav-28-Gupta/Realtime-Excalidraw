@@ -3,14 +3,15 @@ import React, { useState, useEffect } from "react";
 import { Users, Zap, Shield, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { HTTP_BACKEND } from "../config";
 import { useRouter } from "next/navigation";
+import { tokenManager } from "@/utils/tokenManager";
 
 type AuthMode = "landing" | "signin" | "signup";
-type AppState = "landing" | "authenticated";
+type AppState = "landing" | "authenticated" | "initializing";
 type RoomMode = "create" | "join";
 
 function App() {
 	const router = useRouter();
-	const [appState, setAppState] = useState<AppState>("landing");
+	const [appState, setAppState] = useState<AppState>("initializing");
 	const [authMode, setAuthMode] = useState<AuthMode>("landing");
 	const [roomMode, setRoomMode] = useState<RoomMode>("create");
 	const [showPassword, setShowPassword] = useState(false);
@@ -31,10 +32,30 @@ function App() {
 
 	// Check for existing token on component mount
 	useEffect(() => {
-		const token = localStorage.getItem("token");
-		if (token) {
-			setAppState("authenticated");
-		}
+		const initializeAuth = async () => {
+			try {
+				// Check if there's a valid token
+				if (tokenManager.hasValidToken()) {
+					// Validate with backend to ensure token is still active
+					const isValid = await tokenManager.validateToken();
+
+					if (isValid) {
+						setAppState("authenticated");
+					} else {
+						// Token validation failed, clear and reset
+						tokenManager.clearToken();
+						setAppState("landing");
+					}
+				} else {
+					setAppState("landing");
+				}
+			} catch (error) {
+				console.error("Auth initialization error:", error);
+				setAppState("landing");
+			}
+		};
+
+		initializeAuth();
 	}, []);
 
 	const handleInputChange = (field: string, value: string) => {
@@ -99,7 +120,8 @@ function App() {
 					throw new Error(signinData.message || "Failed to sign in");
 				}
 
-				localStorage.setItem("token", signinData.token);
+				// Use tokenManager to securely store token
+				tokenManager.setToken(signinData.token);
 				setAppState("authenticated");
 			} else {
 				// Sign in API call
@@ -120,7 +142,8 @@ function App() {
 					throw new Error(data.message || "Failed to sign in");
 				}
 
-				localStorage.setItem("token", data.token);
+				// Use tokenManager to securely store token
+				tokenManager.setToken(data.token);
 				setAppState("authenticated");
 			}
 		} catch (error) {
@@ -180,7 +203,7 @@ function App() {
 		setError("");
 
 		try {
-			const token = localStorage.getItem("token");
+			const token = tokenManager.getToken();
 			if (!token) {
 				setError("Please sign in to create a room");
 				setIsLoading(false);
@@ -223,7 +246,7 @@ function App() {
 	};
 
 	const handleLogout = () => {
-		localStorage.removeItem("token");
+		tokenManager.clearToken();
 		setAppState("landing");
 		setAuthMode("landing");
 		setFormData({ email: "", password: "", confirmPassword: "", name: "" });
@@ -239,6 +262,30 @@ function App() {
 		setAuthMode("landing");
 		setFormData({ email: "", password: "", confirmPassword: "", name: "" });
 	};
+
+	const handleGetStarted = () => {
+		// Check if user already has a valid token
+		if (tokenManager.hasValidToken()) {
+			// Automatically authenticate if token exists
+			setAppState("authenticated");
+		} else {
+			// Otherwise, go to signup page
+			setAuthMode("signup");
+		}
+	};
+
+	if (appState === "initializing") {
+		return (
+			<div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+				<div className="text-center">
+					<div className="inline-flex items-center justify-center mb-4">
+						<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+					</div>
+					<p className="text-gray-600 font-medium">Loading...</p>
+				</div>
+			</div>
+		);
+	}
 
 	if (appState === "authenticated") {
 		return (
@@ -408,7 +455,7 @@ function App() {
 									Sign In
 								</button>
 								<button
-									onClick={() => setAuthMode("signup")}
+									onClick={handleGetStarted}
 									className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200"
 								>
 									Get Started
@@ -435,7 +482,7 @@ function App() {
 							</p>
 							<div className="flex flex-col sm:flex-row gap-4 justify-center">
 								<button
-									onClick={() => setAuthMode("signup")}
+									onClick={handleGetStarted}
 									className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2"
 								>
 									Start Creating

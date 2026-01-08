@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Canvas } from "./Canvas";
 import { useRouter } from "next/navigation";
 import { Home, DoorOpen, X } from "lucide-react";
+import { tokenManager } from "@/utils/tokenManager";
 
 export function RoomCanvas({ roomId }: { roomId: string }) {
 	const router = useRouter();
@@ -21,9 +22,9 @@ export function RoomCanvas({ roomId }: { roomId: string }) {
 
 	useEffect(() => {
 		console.log("Attempting WebSocket connection...");
-		const token = localStorage.getItem("token");
+		const token = tokenManager.getToken();
 		if (!token) {
-			console.error("No authentication token found");
+			console.error("No valid authentication token found");
 			setError("Authentication required. Please sign in again.");
 			return;
 		}
