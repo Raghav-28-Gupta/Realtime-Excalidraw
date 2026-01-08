@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { 
   Users, 
   Zap, 
@@ -449,8 +450,14 @@ function App() {
             <nav className="max-w-7xl mx-auto flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 via-purple-600 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/30">
-                    <Zap className="w-5 h-5 text-white" />
+                  <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-purple-500/30 bg-[#0a0a0f] border border-white/10 flex items-center justify-center">
+                    <Image 
+                      src="/logo.png" 
+                      alt="Excalidraw Logo" 
+                      width={40} 
+                      height={40} 
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl blur opacity-30"></div>
                 </div>
@@ -654,8 +661,14 @@ function App() {
           <footer className="px-6 py-8 border-t border-white/5">
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg flex items-center justify-center">
-                  <Zap className="w-4 h-4 text-white" />
+                <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-[#0a0a0f] border border-white/10">
+                  <Image 
+                    src="/logo.png" 
+                    alt="Excalidraw Logo" 
+                    width={32} 
+                    height={32} 
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <span className="text-gray-400 text-sm">
                   © 2024 Excalidraw. All rights reserved.
