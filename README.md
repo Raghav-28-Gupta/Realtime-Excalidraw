@@ -42,14 +42,36 @@ This project mimics a production-grade microservices architecture using a strong
 
 ### High-Level Design
 
-```mermaid
-graph TD
-    Client["Client (Next.js 15)"] <-->|WebSocket (ws)| WS_Server["WebSocket Server"]
-    Client <-->|"HTTP (REST)"| HTTP_Server["HTTP Server (Express)"]
-    HTTP_Server -->|"Auth/Data"| DB[("PostgreSQL")]
-    WS_Server -->|Persistence| DB
-    WS_Server -.->|"Pub/Sub (Future)"| Redis[("Redis")]
 ```
+┌─────────────────────────────────────────────────────────────────┐
+│                         ARCHITECTURE                            │
+└─────────────────────────────────────────────────────────────────┘
+
+                    ┌──────────────────────┐
+                    │   Client (Next.js)   │
+                    └──────────┬───────────┘
+                               │
+              ┌────────────────┼────────────────┐
+              │                │                │
+              ▼                ▼                │
+    ┌─────────────────┐  ┌─────────────┐       │
+    │  HTTP Backend   │  │  WebSocket  │       │
+    │   (Express)     │  │   Server    │       │
+    └────────┬────────┘  └──────┬──────┘       │
+             │                  │              │
+             │    ┌─────────────┘              │
+             │    │                            │
+             ▼    ▼                            │
+    ┌─────────────────┐              ┌─────────┴───────┐
+    │   PostgreSQL    │              │  Redis (Future) │
+    │    (Prisma)     │              │    Pub/Sub      │
+    └─────────────────┘              └─────────────────┘
+```
+
+**Data Flow:**
+- **HTTP REST API** → Authentication, Room Management, Shape Persistence
+- **WebSocket** → Real-time drawing sync, User presence
+- **PostgreSQL** → Users, Rooms, Shapes storage via Prisma ORM
 
 ### Tech Stack Breakdown
 
