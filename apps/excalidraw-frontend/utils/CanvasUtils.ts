@@ -47,7 +47,6 @@ export class CanvasUtils {
           this.ctx.scale(scale, scale); // To scale the canvas coordinate system
      }
 
-     // Restore canvas transformation
      restoreTransform(): void {
           this.ctx.restore(); // Restore original coordinate system
      }

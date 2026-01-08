@@ -90,10 +90,9 @@ export class Game {
      clearCanvas() {
           this.canvasUtils.clearCanvas();
 
-          // Apply transformation for infinite canvas with zoom
+          // Applying transformation for infinite canvas with zoom
           this.canvasUtils.applyTransform(this.offsetX, this.offsetY, this.scale);
 
-          // Draw all existing shapes
           for (const shape of this.existingShapes) {
                this.canvasUtils.drawShape(shape, { stroke: "white" });
           }

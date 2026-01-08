@@ -107,7 +107,6 @@ wss.on("connection", function connection(ws, request) {
 
                console.log("Erase request received:", { roomId, shapesToErase });
 
-               // Deleting the erased shapes from database
                for (const shapeToErase of shapesToErase) {
                     console.log(`Attempting to delete shape:`, shapeToErase);
                     
@@ -118,7 +117,7 @@ wss.on("connection", function connection(ws, request) {
                          }
                     });
                     
-                    // Find matching messages in the database
+
                     const messagesToDelete = allMessages.filter(dbMessage => {
                          try {
                               const dbShape = JSON.parse(dbMessage.message).shape;
