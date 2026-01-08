@@ -44,11 +44,11 @@ This project mimics a production-grade microservices architecture using a strong
 
 ```mermaid
 graph TD
-    Client[Client (Next.js 15)] <-->|WebSocket (ws)| WS_Server[WebSocket Server]
-    Client <-->|HTTP (REST)| HTTP_Server[HTTP Server (Express)]
-    HTTP_Server -->|Auth/Data| DB[(PostgreSQL)]
+    Client["Client (Next.js 15)"] <-->|WebSocket (ws)| WS_Server["WebSocket Server"]
+    Client <-->|"HTTP (REST)"| HTTP_Server["HTTP Server (Express)"]
+    HTTP_Server -->|"Auth/Data"| DB[("PostgreSQL")]
     WS_Server -->|Persistence| DB
-    WS_Server -.->|Pub/Sub (Future)| Redis[(Redis)]
+    WS_Server -.->|"Pub/Sub (Future)"| Redis[("Redis")]
 ```
 
 ### Tech Stack Breakdown
