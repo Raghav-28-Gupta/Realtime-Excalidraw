@@ -10,8 +10,8 @@ export const roomRouter: ExpressRouter = Router();
 roomRouter.post("", userMiddleware, async (req: Request, res: Response) => {
      // Only slug is expected from client, 
      // adminId comes from userMiddleware (req.userId)
-     const CreateRoomSchema = RoomSchema.omit({ id: true, createdAt: true, adminId: true});
-     const dataPassed = CreateRoomSchema.safeParse(req.body); 
+     const CreateRoomSchema = RoomSchema.omit({ id: true, createdAt: true, adminId: true });
+     const dataPassed = CreateRoomSchema.safeParse(req.body);
 
      if (!dataPassed.success) {
           return res.status(400).json({ message: "Incorrect Format" });
@@ -21,8 +21,8 @@ roomRouter.post("", userMiddleware, async (req: Request, res: Response) => {
      // @ts-ignore
      const adminId = req.userId;
 
-     const existingRoomName = await prisma.room.findFirst({ where: {slug, adminId} });
-     if(existingRoomName) {
+     const existingRoomName = await prisma.room.findFirst({ where: { slug, adminId } });
+     if (existingRoomName) {
           return res.status(400).json({
                message: "Select a different room name"
           });
@@ -90,7 +90,7 @@ roomRouter.get("/room/:slug", async (req: Request, res: Response) => {
 // @ts-ignore
 roomRouter.post("/validate-room", async (req: Request, res: Response) => {
      const { roomId, roomName } = req.body;
-     
+
      if (!roomId || !roomName) {
           return res.status(400).json({
                message: "Both room ID and room name are required"
@@ -122,3 +122,71 @@ roomRouter.post("/validate-room", async (req: Request, res: Response) => {
           });
      }
 })
+
+// Get user's rooms (requires authentication)
+// @ts-ignore
+roomRouter.get("/my-rooms", userMiddleware, async (req: Request, res: Response) => {
+     try {
+          // @ts-ignore
+          const userId = req.userId;
+
+          const rooms = await prisma.room.findMany({
+               where: { adminId: userId },
+               orderBy: { createdAt: "desc" },
+               select: {
+                    id: true,
+                    slug: true,
+                    createdAt: true,
+                    _count: {
+                         select: { chats: true }
+                    }
+               }
+          });
+
+          res.json({
+               rooms: rooms.map(room => ({
+                    id: room.id,
+                    slug: room.slug,
+                    createdAt: room.createdAt,
+                    shapeCount: room._count.chats
+               }))
+          });
+     } catch (error) {
+          console.error("Failed to get user rooms:", error);
+          res.status(500).json({ message: "Failed to get rooms" });
+     }
+});
+
+// Get single room by ID
+roomRouter.get("/id/:roomId", async (req: Request, res: Response) => {
+     try {
+          const roomId = Number(req.params.roomId);
+
+          if (isNaN(roomId)) {
+               res.status(400).json({ message: "Invalid room ID" });
+               return;
+          }
+
+          const room = await prisma.room.findUnique({
+               where: { id: roomId },
+               select: {
+                    id: true,
+                    slug: true,
+                    createdAt: true,
+                    admin: {
+                         select: { name: true }
+                    }
+               }
+          });
+
+          if (!room) {
+               res.status(404).json({ message: "Room not found" });
+               return;
+          }
+
+          res.json({ room });
+     } catch (error) {
+          console.error("Failed to get room:", error);
+          res.status(500).json({ message: "Failed to get room" });
+     }
+});
