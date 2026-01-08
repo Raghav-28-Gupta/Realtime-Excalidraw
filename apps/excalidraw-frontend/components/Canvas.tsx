@@ -74,16 +74,14 @@ export function Canvas({
   // Update game color when selection changes
   useEffect(() => {
     if (game) {
-      // @ts-ignore - We'll add this method to the Game class
-      game.setColor?.(selectedColor);
+      game.setColor(selectedColor);
     }
   }, [selectedColor, game]);
 
   // Update game stroke width when selection changes
   useEffect(() => {
     if (game) {
-      // @ts-ignore - We'll add this method to the Game class
-      game.setStrokeWidth?.(strokeWidth);
+      game.setStrokeWidth(strokeWidth);
     }
   }, [strokeWidth, game]);
 
@@ -136,27 +134,25 @@ export function Canvas({
   }, []);
 
   const handleZoomIn = () => {
-    setZoom((prev) => Math.min(prev + 10, 200));
-    // @ts-ignore
-    game?.setZoom?.(zoom + 10);
+    const newZoom = Math.min(zoom + 10, 200);
+    setZoom(newZoom);
+    game?.setZoom(newZoom);
   };
 
   const handleZoomOut = () => {
-    setZoom((prev) => Math.max(prev - 10, 50));
-    // @ts-ignore
-    game?.setZoom?.(zoom - 10);
+    const newZoom = Math.max(zoom - 10, 50);
+    setZoom(newZoom);
+    game?.setZoom(newZoom);
   };
 
   const handleResetZoom = () => {
     setZoom(100);
-    // @ts-ignore
-    game?.setZoom?.(100);
+    game?.setZoom(100);
   };
 
   const handleClearCanvas = () => {
     if (confirm("Are you sure you want to clear the entire canvas? This action cannot be undone.")) {
-      // @ts-ignore
-      game?.clearCanvas?.();
+      game?.clearAllShapes();
     }
   };
 
